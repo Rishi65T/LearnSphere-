@@ -13,14 +13,8 @@ import {
   PROGRAMMING_TOPICS,
 } from "./src/data/quizQuestionBank.ts";
 import { runJavaScriptWithTests, gradeFromTestResults } from "./src/lib/codeRunner.ts";
-import {
-  GEMINI_MODELS,
-  buildSphereBotOfflineResponse,
-  getGeminiKey,
-  getGeminiStatus,
-  isGeminiConfigured,
-  parseGeminiError,
-} from "./src/lib/geminiHelpers.ts";
+import videoRouter from "./src/routes/videoRouter";
+import { GEMINI_MODELS, buildSphereBotOfflineResponse, getGeminiKey, getGeminiStatus, isGeminiConfigured, parseGeminiError } from "./src/lib/geminiHelpers.ts";
 
 function createGeminiClient() {
   return new GoogleGenAI({
@@ -59,9 +53,12 @@ async function generateWithGemini(
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3002;
 
   app.use(express.json());
+
+  // Register API routes
+  app.use("/api", videoRouter);
 
   // In-memory mock database
   const db = {

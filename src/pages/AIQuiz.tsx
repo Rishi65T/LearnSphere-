@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   Target,
@@ -18,11 +18,16 @@ import {
   Brain,
 } from "lucide-react";
 import { cn } from "../lib/utils";
+import { saveQuizSession, getQuizProfile } from "../lib/quizProfile";
 import {
   PROGRAMMING_TOPICS,
   MIN_QUESTIONS_FOR_FULL_COVERAGE,
 } from "../data/programmingTopics";
-import { saveQuizSession, getQuizProfile } from "../lib/quizProfile";
+
+import { TOPIC_VIDEOS } from "../data/topicVideos";
+import e from "express";
+
+
 
 type MCQuestion = {
   id: number;
@@ -63,14 +68,14 @@ type TestRunResult = {
 type UserAnswer =
   | { type: "multiple_choice"; selectedIndex: number; isCorrect: boolean }
   | {
-      type: "programming";
-      code: string;
-      isCorrect: boolean;
-      score: number;
-      feedback: string;
-      strengths: string[];
-      improvements: string[];
-    };
+    type: "programming";
+    code: string;
+    isCorrect: boolean;
+    score: number;
+    feedback: string;
+    strengths: string[];
+    improvements: string[];
+  };
 
 type TopicAnalysis = {
   recognizedTopic: string;
@@ -114,6 +119,7 @@ export function AIQuiz() {
   const [codeAnswer, setCodeAnswer] = useState("");
   const [userAnswers, setUserAnswers] = useState<(UserAnswer | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [videoId, setVideoId] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [codeFeedback, setCodeFeedback] = useState<{
     isCorrect: boolean;
@@ -399,6 +405,29 @@ export function AIQuiz() {
       .finally(() => setLoadingProPlan(false));
   }, [showResults]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Fetch YouTube video ID for the current sub‑topic
+  useEffect(() => {
+    if (!currentQ?.subTopic) {
+      setVideoId(null);
+      return;
+    }
+    const fetchVideo = async () => {
+      try {
+        const res = await fetch(`/api/videos/${encodeURIComponent(currentQ.subTopic)}`);
+        const items = await res.json();
+        if (Array.isArray(items) && items.length > 0) {
+          setVideoId(items[0].id?.videoId ?? null);
+        } else {
+          setVideoId(null);
+        }
+      } catch (e) {
+        console.error('Failed to fetch video', e);
+        setVideoId(null);
+      }
+    };
+    fetchVideo();
+  }, [currentQ?.subTopic]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -586,9 +615,20 @@ export function AIQuiz() {
                   </span>
                 )}
               </span>
-              <span className="px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-slate-300">
-                {currentQ.subTopic}
-              </span>
+              <span className="px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-slate-300">{currentQ.subTopic}</span>
+{videoId ? (
+  <iframe
+    className="w-full h-64 rounded-lg mt-4"
+    src={`https://www.youtube.com/embed/${videoId}`}
+    title={`Video for ${currentQ?.subTopic}`}
+    frameBorder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowFullScreen
+  />
+) : (
+  <div className="text-sm text-slate-400 mt-4">No video available</div>
+)}
+
             </div>
           </div>
 
@@ -610,18 +650,18 @@ export function AIQuiz() {
                       className={cn(
                         "w-full text-left px-6 py-4 rounded-xl border flex items-center justify-between transition-all",
                         !showStatus &&
-                          "hover:border-indigo-500/50 hover:bg-indigo-900/10 border-slate-600 text-slate-200",
+                        "hover:border-indigo-500/50 hover:bg-indigo-900/10 border-slate-600 text-slate-200",
                         showStatus &&
-                          isCorrect &&
-                          "bg-emerald-900/20 border-emerald-500/50 text-emerald-400",
+                        isCorrect &&
+                        "bg-emerald-900/20 border-emerald-500/50 text-emerald-400",
                         showStatus &&
-                          isSelected &&
-                          !isCorrect &&
-                          "bg-rose-900/20 border-rose-500/50 text-rose-400",
+                        isSelected &&
+                        !isCorrect &&
+                        "bg-rose-900/20 border-rose-500/50 text-rose-400",
                         showStatus &&
-                          !isSelected &&
-                          !isCorrect &&
-                          "opacity-50 bg-slate-900/50 border-slate-700 text-slate-500",
+                        !isSelected &&
+                        !isCorrect &&
+                        "opacity-50 bg-slate-900/50 border-slate-700 text-slate-500",
                       )}
                     >
                       <span>{opt}</span>
@@ -818,214 +858,214 @@ export function AIQuiz() {
 
       {showResults && quiz && (
         <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="lg:col-span-2 bg-slate-800 p-12 rounded-3xl border border-slate-700 shadow-sm text-center space-y-6 flex flex-col items-center justify-center min-h-[400px]"
-          >
-            <div className="w-24 h-24 bg-indigo-900/40 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-4xl font-bold text-indigo-400">
-                {Math.round((score / quiz.questions.length) * 100)}%
-              </span>
-            </div>
-            <h2 className="text-3xl font-display font-bold text-white">
-              Quiz Completed!
-            </h2>
-            <p className="text-slate-400 max-w-lg">
-              You scored {score} out of {quiz.questions.length} on {topic}.
-            </p>
-
-            <div className="flex gap-4 text-sm text-slate-500">
-              <span>
-                {quiz.questions.filter((q) => q.type === "multiple_choice").length} MC
-              </span>
-              <span>·</span>
-              <span>
-                {quiz.questions.filter((q) => q.type === "programming").length} Coding
-              </span>
-            </div>
-
-            <button
-              onClick={() => setQuiz(null)}
-              className="mt-8 px-8 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-500 transition-colors inline-block"
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="lg:col-span-2 bg-slate-800 p-12 rounded-3xl border border-slate-700 shadow-sm text-center space-y-6 flex flex-col items-center justify-center min-h-[400px]"
             >
-              Create New Quiz
-            </button>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-sm space-y-6"
-          >
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <Target className="text-indigo-400" size={24} /> Performance Review
-            </h3>
-            <p className="text-sm text-slate-300 leading-relaxed border-b border-slate-700 pb-4">
-              {quiz.overview}
-            </p>
-
-            {strengths.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide flex items-center gap-2">
-                  <ThumbsUp size={16} /> Strong Areas
-                </h4>
-                {strengths.map((s, i) => (
-                  <div
-                    key={i}
-                    className="p-3 bg-emerald-900/20 border border-emerald-500/30 rounded-xl text-sm text-emerald-300"
-                  >
-                    {s}
-                  </div>
-                ))}
+              <div className="w-24 h-24 bg-indigo-900/40 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl font-bold text-indigo-400">
+                  {Math.round((score / quiz.questions.length) * 100)}%
+                </span>
               </div>
-            )}
-
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-rose-400 uppercase tracking-wide flex items-center gap-2">
-                <AlertTriangle size={16} /> Areas to Improve
-              </h4>
-              {improvements.length > 0 ? (
-                improvements.map((area, i) => (
-                  <div
-                    key={i}
-                    className="p-3 bg-slate-900/50 border border-rose-500/20 rounded-xl text-sm text-slate-200"
-                  >
-                    {area}
-                  </div>
-                ))
-              ) : (
-                <div className="p-4 bg-emerald-900/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm font-medium text-center">
-                  Perfect score! No specific areas to improve.
-                </div>
-              )}
-            </div>
-
-            {includeProgramming && (
-              <div className="pt-4 border-t border-slate-700">
-                <p className="text-xs text-slate-500 mb-2">
-                  Programming topics covered ({PROGRAMMING_TOPICS.length} total):
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {PROGRAMMING_TOPICS.map((t) => {
-                    const covered = quiz.questions.some(
-                      (q) => q.subTopic === t || q.subTopic.includes(t),
-                    );
-                    const mastered = strengths.some(
-                      (s) => s === t || s.includes(t),
-                    );
-                    return (
-                      <span
-                        key={t}
-                        className={cn(
-                          "text-[10px] px-2 py-0.5 rounded-full border",
-                          mastered
-                            ? "bg-emerald-900/30 border-emerald-500/40 text-emerald-400"
-                            : covered
-                              ? "bg-slate-900/50 border-slate-600 text-slate-400"
-                              : "bg-rose-900/20 border-rose-500/30 text-rose-400",
-                        )}
-                      >
-                        {t}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </motion.div>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-indigo-900/30 to-purple-900/20 p-8 rounded-3xl border border-indigo-500/30 space-y-6"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-600/30 rounded-xl">
-              <GraduationCap className="text-indigo-400" size={24} />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">Your Pro Learning Path</h3>
-              <p className="text-sm text-slate-400">
-                LearnSphere AI builds a mastery plan from your strengths
+              <h2 className="text-3xl font-display font-bold text-white">
+                Quiz Completed!
+              </h2>
+              <p className="text-slate-400 max-w-lg">
+                You scored {score} out of {quiz.questions.length} on {topic}.
               </p>
-            </div>
-          </div>
 
-          {loadingProPlan ? (
-            <div className="flex items-center gap-2 text-slate-400 py-6">
-              <Loader2 className="animate-spin" size={20} />
-              Generating your personalized pro plan...
-            </div>
-          ) : proPlan ? (
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-lg font-semibold text-indigo-300">{proPlan.planTitle}</h4>
-                <p className="text-slate-300 mt-2 leading-relaxed">{proPlan.summary}</p>
-                <p className="text-xs text-slate-500 mt-2">
-                  Estimated timeline: {proPlan.estimatedWeeks} weeks
-                </p>
+              <div className="flex gap-4 text-sm text-slate-500">
+                <span>
+                  {quiz.questions.filter((q) => q.type === "multiple_choice").length} MC
+                </span>
+                <span>·</span>
+                <span>
+                  {quiz.questions.filter((q) => q.type === "programming").length} Coding
+                </span>
               </div>
 
-              {proPlan.strengthHighlight?.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {proPlan.strengthHighlight.map((s) => (
-                    <span
-                      key={s}
-                      className="px-3 py-1 bg-emerald-900/30 border border-emerald-500/40 rounded-full text-xs text-emerald-300"
+              <button
+                onClick={() => setQuiz(null)}
+                className="mt-8 px-8 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-500 transition-colors inline-block"
+              >
+                Create New Quiz
+              </button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-sm space-y-6"
+            >
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Target className="text-indigo-400" size={24} /> Performance Review
+              </h3>
+              <p className="text-sm text-slate-300 leading-relaxed border-b border-slate-700 pb-4">
+                {quiz.overview}
+              </p>
+
+              {strengths.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide flex items-center gap-2">
+                    <ThumbsUp size={16} /> Strong Areas
+                  </h4>
+                  {strengths.map((s, i) => (
+                    <div
+                      key={i}
+                      className="p-3 bg-emerald-900/20 border border-emerald-500/30 rounded-xl text-sm text-emerald-300"
                     >
-                      Strength: {s}
-                    </span>
+                      {s}
+                    </div>
                   ))}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {proPlan.phases.map((phase, i) => (
-                  <div
-                    key={i}
-                    className="p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2"
-                  >
-                    <p className="text-xs text-indigo-400 font-bold uppercase">
-                      {phase.duration}
-                    </p>
-                    <h5 className="font-semibold text-white text-sm">{phase.title}</h5>
-                    <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
-                      {phase.goals.slice(0, 3).map((g, j) => (
-                        <li key={j}>{g}</li>
-                      ))}
-                    </ul>
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-rose-400 uppercase tracking-wide flex items-center gap-2">
+                  <AlertTriangle size={16} /> Areas to Improve
+                </h4>
+                {improvements.length > 0 ? (
+                  improvements.map((area, i) => (
+                    <div
+                      key={i}
+                      className="p-3 bg-slate-900/50 border border-rose-500/20 rounded-xl text-sm text-slate-200"
+                    >
+                      {area}
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 bg-emerald-900/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm font-medium text-center">
+                    Perfect score! No specific areas to improve.
                   </div>
-                ))}
+                )}
               </div>
 
-              <div className="flex flex-wrap gap-3 pt-2">
-                <button
-                  onClick={() =>
-                    navigate("/recommendations", {
-                      state: {
-                        topic: topicAnalysis?.recognizedTopic || topic,
-                        level: strengths.length >= 2 ? "Pro" : "Intermediate",
-                      },
-                    })
-                  }
-                  className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-500 transition-colors flex items-center gap-2"
-                >
-                  Open AI Path Planner
-                  <ArrowRight size={16} />
-                </button>
-                <button
-                  onClick={() => setQuiz(null)}
-                  className="px-6 py-3 bg-slate-700 text-white font-medium rounded-xl hover:bg-slate-600 transition-colors"
-                >
-                  Practice Another Topic
-                </button>
+              {includeProgramming && (
+                <div className="pt-4 border-t border-slate-700">
+                  <p className="text-xs text-slate-500 mb-2">
+                    Programming topics covered ({PROGRAMMING_TOPICS.length} total):
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {PROGRAMMING_TOPICS.map((t) => {
+                      const covered = quiz.questions.some(
+                        (q) => q.subTopic === t || q.subTopic.includes(t),
+                      );
+                      const mastered = strengths.some(
+                        (s) => s === t || s.includes(t),
+                      );
+                      return (
+                        <span
+                          key={t}
+                          className={cn(
+                            "text-[10px] px-2 py-0.5 rounded-full border",
+                            mastered
+                              ? "bg-emerald-900/30 border-emerald-500/40 text-emerald-400"
+                              : covered
+                                ? "bg-slate-900/50 border-slate-600 text-slate-400"
+                                : "bg-rose-900/20 border-rose-500/30 text-rose-400",
+                          )}
+                        >
+                          {t}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-indigo-900/30 to-purple-900/20 p-8 rounded-3xl border border-indigo-500/30 space-y-6"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-600/30 rounded-xl">
+                <GraduationCap className="text-indigo-400" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Your Pro Learning Path</h3>
+                <p className="text-sm text-slate-400">
+                  LearnSphere AI builds a mastery plan from your strengths
+                </p>
               </div>
             </div>
-          ) : null}
-        </motion.div>
+
+            {loadingProPlan ? (
+              <div className="flex items-center gap-2 text-slate-400 py-6">
+                <Loader2 className="animate-spin" size={20} />
+                Generating your personalized pro plan...
+              </div>
+            ) : proPlan ? (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-indigo-300">{proPlan.planTitle}</h4>
+                  <p className="text-slate-300 mt-2 leading-relaxed">{proPlan.summary}</p>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Estimated timeline: {proPlan.estimatedWeeks} weeks
+                  </p>
+                </div>
+
+                {proPlan.strengthHighlight?.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {proPlan.strengthHighlight.map((s) => (
+                      <span
+                        key={s}
+                        className="px-3 py-1 bg-emerald-900/30 border border-emerald-500/40 rounded-full text-xs text-emerald-300"
+                      >
+                        Strength: {s}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {proPlan.phases.map((phase, i) => (
+                    <div
+                      key={i}
+                      className="p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2"
+                    >
+                      <p className="text-xs text-indigo-400 font-bold uppercase">
+                        {phase.duration}
+                      </p>
+                      <h5 className="font-semibold text-white text-sm">{phase.title}</h5>
+                      <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                        {phase.goals.slice(0, 3).map((g, j) => (
+                          <li key={j}>{g}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <button
+                    onClick={() =>
+                      navigate("/recommendations", {
+                        state: {
+                          topic: topicAnalysis?.recognizedTopic || topic,
+                          level: strengths.length >= 2 ? "Pro" : "Intermediate",
+                        },
+                      })
+                    }
+                    className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-500 transition-colors flex items-center gap-2"
+                  >
+                    Open AI Path Planner
+                    <ArrowRight size={16} />
+                  </button>
+                  <button
+                    onClick={() => setQuiz(null)}
+                    className="px-6 py-3 bg-slate-700 text-white font-medium rounded-xl hover:bg-slate-600 transition-colors"
+                  >
+                    Practice Another Topic
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </motion.div>
         </div>
       )}
     </motion.div>
