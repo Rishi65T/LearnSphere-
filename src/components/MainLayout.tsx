@@ -103,7 +103,7 @@ export function MainLayout() {
                   <NavLink
                     key={item.path}
                     to={item.path}
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => { if (window.innerWidth < 1024) setSidebarOpen(false); }}
                     className={cn(
                       "flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-bold w-full group relative overflow-hidden",
                       isActive
@@ -163,7 +163,6 @@ export function MainLayout() {
                   <button 
                     onClick={() => {
                       navigate("/profile");
-                      setSidebarOpen(false);
                     }} 
                     className="flex items-center gap-3 text-left flex-1 transition-transform duration-300"
                   >
