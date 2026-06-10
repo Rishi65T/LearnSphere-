@@ -1,0 +1,268 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+}
+
+@layer base {
+  body {
+    @apply antialiased text-slate-200 bg-[#0F172A];
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+}
+
+/* GLOBAL POP-UP EFFECT FOR EVERYTHING INTERACTIVE */
+button, 
+a[href],
+.interactive-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover:not(:disabled),
+a[href]:hover,
+.interactive-card:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 25px -5px rgba(99, 102, 241, 0.3), 0 8px 10px -6px rgba(99, 102, 241, 0.1);
+  z-index: 10;
+}
+
+button:active:not(:disabled),
+a[href]:active,
+.interactive-card:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3), 0 2px 4px -2px rgba(99, 102, 241, 0.1);
+}
+
+/* HIGHLY POLISHED NATIVE DARK THEME */
+html:not([data-theme="light"]) body {
+  background-color: #070412 !important;
+  background-image: radial-gradient(#1e1a3b 1.2px, transparent 1.2px) !important;
+  background-size: 24px 24px !important;
+  position: relative;
+}
+
+/* Beautiful glow nodes on page corners for dark theme to prevent looking raw or empty */
+html:not([data-theme="light"]) body::before {
+  content: "";
+  position: fixed;
+  top: -10%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%) !important;
+  z-index: -1;
+  pointer-events: none;
+}
+
+html:not([data-theme="light"]) body::after {
+  content: "";
+  position: fixed;
+  bottom: -10%;
+  right: -10%;
+  width: 50%;
+  height: 55%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.20) 0%, transparent 70%) !important;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* HIGHLY POLISHED NATIVE LIGHT THEME */
+html[data-theme="light"] {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+html[data-theme="light"] body {
+  background-color: #ffffff !important;
+  background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px) !important;
+  background-size: 24px 24px !important;
+  color: #000000 !important;
+  position: relative;
+}
+
+/* Beautiful glow nodes on page corners to prevent looking raw or empty */
+html[data-theme="light"] body::before {
+  content: "";
+  position: fixed;
+  top: -10%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%) !important;
+  z-index: -1;
+  pointer-events: none;
+}
+
+html[data-theme="light"] body::after {
+  content: "";
+  position: fixed;
+  bottom: -10%;
+  right: -10%;
+  width: 50%;
+  height: 55%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%) !important;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Premium Typography override */
+html[data-theme="light"] h1,
+html[data-theme="light"] h2,
+html[data-theme="light"] h3,
+html[data-theme="light"] h4,
+html[data-theme="light"] h5,
+html[data-theme="light"] h6 {
+  color: #000000 !important;
+}
+
+html[data-theme="light"] .text-slate-100,
+html[data-theme="light"] .text-slate-200,
+html[data-theme="light"] .text-slate-300,
+html[data-theme="light"] .text-slate-400,
+html[data-theme="light"] .text-slate-500,
+html[data-theme="light"] .text-white {
+  color: #000000 !important;
+}
+
+/* Ensure buttons with text-white aren't overwritten to dark text color */
+html[data-theme="light"] button .text-white,
+html[data-theme="light"] button.text-white,
+html[data-theme="light"] .bg-indigo-600,
+html[data-theme="light"] .bg-indigo-600 *,
+html[data-theme="light"] .bg-emerald-600,
+html[data-theme="light"] .bg-emerald-600 *,
+html[data-theme="light"] .bg-rose-600,
+html[data-theme="light"] .bg-rose-600 * {
+  color: #ffffff !important;
+}
+
+/* Card conversion system */
+html[data-theme="light"] .bg-\[\#0F172A\] {
+  background-color: transparent !important;
+}
+
+html[data-theme="light"] .bg-\[\#1E293B\],
+html[data-theme="light"] .bg-\[\#1E293B\]\/95,
+html[data-theme="light"] .bg-slate-800,
+html[data-theme="light"] .bg-slate-800\/50,
+html[data-theme="light"] .bg-slate-800\/60,
+html[data-theme="light"] .bg-slate-800\/80,
+html[data-theme="light"] .bg-slate-805,
+html[data-theme="light"] .bg-slate-850 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Sub cards or inner elements bg */
+html[data-theme="light"] .bg-slate-905\/30,
+html[data-theme="light"] .bg-slate-900,
+html[data-theme="light"] .bg-slate-900\/30,
+html[data-theme="light"] .bg-slate-900\/40,
+html[data-theme="light"] .bg-slate-900\/50,
+html[data-theme="light"] .bg-slate-950,
+html[data-theme="light"] .bg-slate-950\/80 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Border override mappings */
+html[data-theme="light"] .border-slate-700,
+html[data-theme="light"] .border-slate-700\/40,
+html[data-theme="light"] .border-slate-700\/50,
+html[data-theme="light"] .border-slate-700\/60,
+html[data-theme="light"] .border-slate-700\/80,
+html[data-theme="light"] .border-slate-800,
+html[data-theme="light"] .border-slate-755,
+html[data-theme="light"] .border-slate-750\/30 {
+  border-color: #cbd5e1 !important;
+}
+
+/* Highlight layouts and indicators */
+html[data-theme="light"] .bg-indigo-900\/20 {
+  background-color: #eef2ff !important;
+  border-color: #c7d2fe !important;
+  color: #4f46e5 !important;
+}
+
+html[data-theme="light"] .bg-emerald-950\/20,
+html[data-theme="light"] .bg-emerald-900\/20,
+html[data-theme="light"] .bg-emerald-500\/10 {
+  background-color: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+  color: #16a34a !important;
+}
+
+html[data-theme="light"] .bg-rose-900\/20 {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #e11d48 !important;
+}
+
+html[data-theme="light"] .bg-purple-900\/20 {
+  background-color: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #9333ea !important;
+}
+
+html[data-theme="light"] .bg-indigo-500\/10 {
+  background-color: #eef2ff !important;
+  color: #4f46e5 !important;
+}
+
+/* Sidebar navigation item overrides */
+html[data-theme="light"] .text-indigo-400 {
+  color: #4f46e5 !important;
+}
+
+/* Form and message inputs design */
+html[data-theme="light"] input,
+html[data-theme="light"] textarea,
+html[data-theme="light"] select {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Recharts elements graph overrides under light */
+html[data-theme="light"] .recharts-cartesian-grid-horizontal line,
+html[data-theme="light"] .recharts-cartesian-grid-vertical line {
+  stroke: #e2e8f0 !important;
+}
+html[data-theme="light"] .recharts-text {
+  fill: #64748b !important;
+}
+html[data-theme="light"] .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05) !important;
+}
+html[data-theme="light"] .recharts-default-tooltip .recharts-tooltip-item {
+  color: #0f172a !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.custom-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

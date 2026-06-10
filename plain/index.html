@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Groq Demo – Plain HTML</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #1e1e2f, #2b2b3d); color:#f0f0f5; margin:0; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh;}
+    .card {background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); padding:2rem; border-radius:12px; width:90%; max-width:500px; box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+    textarea, input {width:100%; padding:0.6rem; margin-top:0.5rem; border:none; border-radius:6px; background:#2a2a3a; color:#e0e0eb;}
+    button {margin-top:1rem; padding:0.8rem 1.5rem; background:#4a90e2; color:#fff; border:none; border-radius:6px; cursor:pointer; transition:background .2s;}
+    button:hover {background:#357ab8;}
+    pre {background:#202030; padding:1rem; border-radius:6px; overflow:auto; margin-top:1rem;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Groq API Demo</h2>
+      <textarea id="prompt" rows="4" placeholder="Enter your prompt..."></textarea>
+      <input id="numQuestions" type="number" min="1" placeholder="Number of questions" style="margin-top:0.5rem; padding:0.6rem; border:none; border-radius:6px; background:#2a2a3a; color:#e0e0eb; width:100%;">
+      <button id="sendBtn">Send to Groq</button>
+    <pre id="response"></pre>
+  </div>
+  <script>
+    const sendBtn = document.getElementById('sendBtn');
+    const promptEl = document.getElementById('prompt');
+    const responseEl = document.getElementById('response');
+
+    const videoContainer = document.createElement('div');
+    videoContainer.style.marginTop='1rem';
+    const videoIframe = document.createElement('iframe');
+    videoIframe.id='videoIframe';
+    videoIframe.width='100%';
+    videoIframe.height='315';
+    videoIframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+    videoIframe.allowFullscreen=true;
+    videoContainer.appendChild(videoIframe);
+    document.querySelector('.card').appendChild(videoContainer);
+
+    const updateVideo = (query) => {
+  const encoded = encodeURIComponent(query.trim());
+  if (!encoded) {
+    videoIframe.src = '';
+    videoIframe.style.display = 'none';
+    return;
+  }
+  videoIframe.style.display = 'block';
+  videoIframe.src = `https://www.youtube.com/embed?listType=search&list=${encoded}`;
+};
+
+    sendBtn.addEventListener('click', async () => {
+      const prompt = promptEl.value.trim();
+      if (!prompt) return;
+      responseEl.textContent = '⏳ Sending...';
+      try {
+        const res = await fetch('http://localhost:3000/api/groq', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({prompt})
+        });
+        const data = await res.json();
+        responseEl.textContent = data.response || JSON.stringify(data, null, 2);
+        updateVideo(prompt);
+      } catch (e) {
+        responseEl.textContent = '❌ Error: ' + e.message;
+      }
+    });
+  </script>
+</body>
+</html>
